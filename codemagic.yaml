@@ -1,0 +1,187 @@
+workflows:
+
+  # ═══════════════════════════════════════════════
+  # Android — APK + AAB
+  # ═══════════════════════════════════════════════
+  android-release:
+    name: "🤖 نجوم دلتا — Android Release"
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+
+    environment:
+      groups:
+        - deltastars_android
+      vars:
+        PACKAGE_NAME: "com.deltastars.store"
+        GOOGLE_PLAY_TRACK: "internal"
+      java: 17
+      node: 20
+
+    triggering:
+      events: [push, tag]
+      branch_patterns:
+        - pattern: main
+          include: true
+
+    scripts:
+      - name: "📦 Install dependencies"
+        script: npm ci --legacy-peer-deps
+
+      - name: "🔨 Build web app"
+        script: npm run build
+
+      - name: "🔄 Sync Capacitor"
+        script: |
+          npx cap sync android
+          echo "Capacitor sync complete"
+
+      - name: "🔑 Setup signing keystore"
+        script: |
+          echo $CM_KEYSTORE | base64 --decode > $CM_BUILD_DIR/keystore.jks
+          cat >> "$ANDROID_HOME/local.properties" <<EOF2
+          KEYSTORE_PATH=$CM_BUILD_DIR/keystore.jks
+          KEYSTORE_PASSWORD=$CM_KEYSTORE_PASSWORD
+          KEY_ALIAS=$CM_KEY_ALIAS
+          KEY_PASSWORD=$CM_KEY_PASSWORD
+          EOF2
+
+      - name: "🏗️ Build Android AAB (Play Store)"
+        script: |
+          cd android
+          ./gradlew bundleRelease \
+            -PKEYSTORE_PATH=$CM_BUILD_DIR/keystore.jks \
+            -PKEYSTORE_PASSWORD=$CM_KEYSTORE_PASSWORD \
+            -PKEY_ALIAS=$CM_KEY_ALIAS \
+            -PKEY_PASSWORD=$CM_KEY_PASSWORD
+
+      - name: "📱 Build Android APK (Direct Install)"
+        script: |
+          cd android
+          ./gradlew assembleRelease \
+            -PKEYSTORE_PATH=$CM_BUILD_DIR/keystore.jks \
+            -PKEYSTORE_PASSWORD=$CM_KEYSTORE_PASSWORD \
+            -PKEY_ALIAS=$CM_KEY_ALIAS \
+            -PKEY_PASSWORD=$CM_KEY_PASSWORD
+
+    artifacts:
+      - android/app/build/outputs/bundle/release/*.aab
+      - android/app/build/outputs/apk/release/*.apk
+      - android/app/build/outputs/mapping/release/mapping.txt
+
+    publishing:
+      email:
+        recipients:
+          - INFO@DELTASTARS-KSA.COM
+        notify:
+          success: true
+          failure: true
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: $GOOGLE_PLAY_TRACK
+        submit_as_draft: true
+
+  # ═══════════════════════════════════════════════
+  # iOS — IPA
+  # ═══════════════════════════════════════════════
+  ios-release:
+    name: "🍎 نجوم دلتا — iOS Release"
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+
+    environment:
+      groups:
+        - deltastars_ios
+      vars:
+        BUNDLE_ID: "com.deltastars.store"
+        XCODE_PROJECT: "ios/App/App.xcodeproj"
+        XCODE_SCHEME: "App"
+        APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
+        APP_STORE_CONNECT_KEY_IDENTIFIER: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
+      xcode: latest
+      node: 20
+
+    triggering:
+      events: [push, tag]
+      branch_patterns:
+        - pattern: main
+          include: true
+
+    scripts:
+      - name: "📦 Install dependencies"
+        script: npm ci --legacy-peer-deps
+
+      - name: "🔨 Build web app"
+        script: npm run build
+
+      - name: "🔄 Sync Capacitor (Swift Package Manager)"
+        script: npx cap sync ios
+
+      - name: "🔑 iOS Code Signing"
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files $BUNDLE_ID \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+
+      - name: "🏗️ Build iOS IPA (SPM)"
+        script: |
+          xcode-project build-ipa \
+            --project "$XCODE_PROJECT" \
+            --scheme "$XCODE_SCHEME"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+    publishing:
+      email:
+        recipients:
+          - INFO@DELTASTARS-KSA.COM
+        notify:
+          success: true
+          failure: true
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
+
+  # ═══════════════════════════════════════════════
+  # Web — Netlify Deploy
+  # ═══════════════════════════════════════════════
+  web-deploy:
+    name: "🌐 نجوم دلتا — Web Deploy"
+    max_build_duration: 20
+    instance_type: linux_x2
+
+    environment:
+      groups:
+        - deltastars_web
+      node: 20
+
+    triggering:
+      events: [push]
+      branch_patterns:
+        - pattern: main
+          include: true
+
+    scripts:
+      - name: "📦 Install"
+        script: npm ci --legacy-peer-deps
+
+      - name: "🔨 Build"
+        script: npm run build
+
+      - name: "🚀 Deploy to Netlify"
+        script: |
+          npm install -g netlify-cli
+          netlify deploy --prod \
+            --dir=dist \
+            --auth=$NETLIFY_TOKEN \
+            --site=$NETLIFY_SITE_ID
+
+    artifacts:
+      - dist/**

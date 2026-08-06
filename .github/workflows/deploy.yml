@@ -1,0 +1,71 @@
+name: 🚀 Delta Stars — Build & Deploy
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  build:
+    name: 🔨 Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Type check
+        run: npx tsc --noEmit
+        continue-on-error: true
+
+      - name: Build
+        run: npm run build:vercel
+        env:
+          VITE_SUPABASE_URL:             ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY:        ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_GEMINI_KEY:               ${{ secrets.VITE_GEMINI_KEY }}
+          VITE_MAPS_KEY:                 ${{ secrets.VITE_MAPS_KEY }}
+          VITE_MOYASAR_PUBLISHABLE_KEY:  ${{ secrets.VITE_MOYASAR_PUBLISHABLE_KEY }}
+          VITE_FIREBASE_API_KEY:         ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN:     ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID:      ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_VAPID_KEY:       ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
+
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+
+  deploy-netlify:
+    name: 🌐 Deploy to Netlify
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: dist, path: dist }
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v2
+        with:
+          publish-dir: './dist'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID:    ${{ secrets.NETLIFY_SITE_ID }}

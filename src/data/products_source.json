@@ -1,0 +1,5 @@
+[
+  {"id": 1, "category": "vegetables", "name_ar": "خيار كرتون صغير", "name_en": "Cucumber Small Box", "description": "خيار طازج ومقرمش من المزارع السعودية المختارة بعناية.", "features": ["طازج يومياً", "مغسول ومعبأ بعناية", "خالي من المواد الكيميائية"], "origin": "السعودية", "price": 18.5, "price_unit": "صندوق", "image_url": "https://lh3.googleusercontent.com/d/1X-p5_G1m7n9D_o_W7_l2B5Y7z9z2Z5Z5"},
+  {"id": 2, "category": "vegetables", "name_ar": "طماطم فلين كبير", "name_en": "Tomato Large box", "description": "طماطم حمراء ناضجة بجودة عالية، مثالية للسلطات والطهي.", "features": ["ناضجة تماماً", "غنية بالفيتامينات", "صلبة وعالية الجودة"], "origin": "السعودية", "price": 25.0, "price_unit": "صندوق", "image_url": "https://lh3.googleusercontent.com/d/1_9z_Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5"},
+  {"id": 3, "category": "vegetables", "name_ar": "بصل أحمر - كيس كبير", "name_en": "Red Onion - Large Bag", "description": "بصل أحمر طازج يدوم لفترات طويلة وبنكهة قوية.", "features": ["تخزين طويل الأمد", "جودة تصدير", "نكهة قوية"], "origin": "السعودية", "price": 32.0, "price_unit": "كيس", "image_url": "https://lh3.googleusercontent.com/d/1W_l2B5Y7z9z2Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5"}
+]

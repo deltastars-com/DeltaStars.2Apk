@@ -1,0 +1,66 @@
+# ── Node.js / Dependencies ────────────────────────────────────────────
+node_modules/
+
+# ── Build Output ──────────────────────────────────────────────────────
+dist/
+dist-ssr/
+*.local
+out/
+
+# ── Environment & Secrets (never commit) ─────────────────────────────
+.env
+.env.local
+.env.*.local
+.env.production
+.env.test
+.env.development
+.env.development.local
+!.env.example
+
+# ── Logs & OS files ───────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+
+# ── Editor / IDE ──────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Prisma / Database ─────────────────────────────────────────────────
+prisma/*.db
+prisma/*.db-journal
+
+# ── Uploaded archives (source zips stay tracked; unzipped copies not needed) ──
+# NOTE: The DeltaStars-*.zip archives ARE intentionally tracked (sacred source).
+
+# ── Netlify functions build cache ─────────────────────────────────────
+.netlify/
+
+# ── Capacitor / Native platforms are committed, but ignore generated/cached parts ──
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+android/app/src/main/res/xml/config.xml
+android/capacitor-cordova-android-plugins/
+ios/App/Pods/
+ios/App/build/
+ios/App/output/
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/App/App/config.xml
+ios/App/DerivedData/
+ios/App/xcuserdata/
+*.xcuserstate
+ios/App/App.xcodeproj/project.xcworkspace/xcuserdata/

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>غير متصل بالإنترنت - نجوم دلتا</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            direction: rtl;
+        }
+
+        .offline-container {
+            max-width: 420px;
+            width: 100%;
+            background: #1e293b;
+            border-radius: 32px;
+            padding: 48px 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .brand-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            box-shadow: 0 0 40px rgba(16, 185, 129, 0.25);
+        }
+
+        .brand-icon svg {
+            width: 48px;
+            height: 48px;
+            fill: white;
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: 800;
+            color: #f8fafc;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #94a3b8;
+            margin-bottom: 32px;
+            line-height: 1.7;
+        }
+
+        .subtitle strong {
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        .wifi-off-icon {
+            margin: 10px auto 28px;
+            width: 72px;
+            height: 72px;
+            opacity: 0.7;
+        }
+
+        .wifi-off-icon svg {
+            width: 100%;
+            height: 100%;
+            stroke: #facc15;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        .retry-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #10b981, #047857);
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+            padding: 16px 40px;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.35);
+            width: 100%;
+            max-width: 260px;
+            letter-spacing: 0.3px;
+        }
+
+        .retry-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(16, 185, 129, 0.5);
+            background: linear-gradient(135deg, #34d399, #059669);
+        }
+
+        .retry-btn:active {
+            transform: scale(0.97);
+        }
+
+        .retry-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .connection-status {
+            margin-top: 24px;
+            font-size: 14px;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ef4444;
+            transition: background 0.3s ease;
+        }
+
+        .dot.online {
+            background: #22c55e;
+        }
+
+        .footer-note {
+            margin-top: 32px;
+            font-size: 13px;
+            color: #475569;
+            border-top: 1px solid #334155;
+            padding-top: 20px;
+        }
+
+        .footer-note span {
+            color: #10b981;
+        }
+
+        @media (max-width: 480px) {
+            .offline-container {
+                padding: 32px 20px;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            .retry-btn {
+                font-size: 16px;
+                padding: 14px 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container" role="main" aria-label="صفحة عدم الاتصال بالإنترنت">
+        <div class="brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+            </svg>
+        </div>
+
+        <div class="wifi-off-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 18C13.1 18 14 18.9 14 20C14 21.1 13.1 22 12 22C10.9 22 10 21.1 10 20C10 18.9 10.9 18 12 18Z" fill="#facc15"/>
+                <path d="M8.5 13.5C9.7 12.4 11.3 11.8 13 11.8C14.7 11.8 16.3 12.4 17.5 13.5L16.1 14.9C15.2 14.1 14.1 13.6 13 13.6C11.9 13.6 10.8 14.1 9.9 14.9L8.5 13.5Z" fill="#facc15"/>
+                <path d="M4.2 9.2C6.2 7.3 8.8 6.2 11.5 6.2C14.2 6.2 16.8 7.3 18.8 9.2L17.4 10.6C15.8 9.1 13.7 8.2 11.5 8.2C9.3 8.2 7.2 9.1 5.6 10.6L4.2 9.2Z" fill="#facc15"/>
+                <path d="M0.5 4.8C3.5 2.1 7.3 0.5 11.5 0.5C15.7 0.5 19.5 2.1 22.5 4.8L21.1 6.2C18.4 3.8 15.1 2.5 11.5 2.5C7.9 2.5 4.6 3.8 1.9 6.2L0.5 4.8Z" fill="#facc15"/>
+                <line x1="3" y1="3" x2="21" y2="21" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+        </div>
+
+        <h1>أنت غير متصل بالإنترنت</h1>
+        <p class="subtitle">
+            يبدو أن اتصالك بالشبكة قد انقطع.<br>
+            لا تقلق، بيانات متجر <strong>نجوم دلتا</strong> في انتظارك.
+        </p>
+
+        <button id="retryBtn" class="retry-btn">
+            🔄  إعادة المحاولة
+        </button>
+
+        <div class="connection-status">
+            <span class="dot" id="statusDot"></span>
+            <span id="statusText">في انتظار الاتصال...</span>
+        </div>
+
+        <div class="footer-note">
+            <span>✦</span> نجوم دلتا - تسوق بثقة <span>✦</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            const retryBtn = document.getElementById('retryBtn');
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+
+            function updateConnectionStatus(isOnline) {
+                if (isOnline) {
+                    statusDot.className = 'dot online';
+                    statusText.textContent = '✅ الاتصال نشط! جاري إعادة التوجيه...';
+                    retryBtn.disabled = true;
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 600);
+                } else {
+                    statusDot.className = 'dot';
+                    statusText.textContent = '❌ لا يوجد اتصال بالإنترنت';
+                    retryBtn.disabled = false;
+                }
+            }
+
+            function checkNetworkAndRedirect() {
+                if (navigator.onLine) {
+                    updateConnectionStatus(true);
+                } else {
+                    updateConnectionStatus(false);
+                }
+            }
+
+            window.addEventListener('online', function() {
+                checkNetworkAndRedirect();
+            });
+
+            window.addEventListener('offline', function() {
+                updateConnectionStatus(false);
+            });
+
+            retryBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                retryBtn.textContent = '⏳ جاري التحقق...';
+                retryBtn.disabled = true;
+                checkNetworkAndRedirect();
+                setTimeout(() => {
+                    if (retryBtn.disabled && !navigator.onLine) {
+                        retryBtn.textContent = '🔄  إعادة المحاولة';
+                        retryBtn.disabled = false;
+                        statusText.textContent = '⚠️ لم يتم استعادة الاتصال. حاول مرة أخرى.';
+                    }
+                }, 3000);
+            });
+
+            checkNetworkAndRedirect();
+
+            setInterval(() => {
+                if (navigator.onLine) {
+                    checkNetworkAndRedirect();
+                }
+            }, 10000);
+
+        })();
+    </script>
+</body>
+</html>

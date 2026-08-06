@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #1a3a1a;
+  --color-primary-light: #234e23;
+  --color-primary-dark: #0f240f;
+  --color-secondary: #FF922B;
+  --color-secondary-light: #ffa654;
+  --color-secondary-dark: #cc701c;
+  --color-accent: #234e23;
+  --color-slate-gray: #f8fafc;
+}
+
+@layer base {
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Tajawal', 'Cairo', 'Segoe UI', sans-serif;
+    background-color: #f8fafc;
+    -webkit-font-smoothing: antialiased;
+  }
+  img { max-width: 100%; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+}
+
+@layer utilities {
+  .line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; }
+  .line-clamp-2 { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+}
+
+/* Custom Slow and Smooth Marquee Animation */
+@keyframes marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: marquee 45s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+

@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL")
+}
+
+model Product {
+  id              Int      @id @default(autoincrement())
+  name_ar         String
+  name_en         String
+  category        String
+  price           Float
+  image           String
+  unit_ar         String
+  unit_en         String
+  description_ar  String?
+  description_en  String?
+  features_ar     String?
+  features_en     String?
+  origin_ar       String?
+  origin_en       String?
+  benefits_ar     String?
+  benefits_en     String?
+  stock_quantity  Int      @default(0)
+  min_threshold   Int      @default(5)
+  gallery         String[] @default([])
+  extra_settings  Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Order {
+  id              String   @id @default(cuid())
+  customerId      String
+  customerName    String
+  total           Float
+  status          String   @default("pending")
+  createdAt       DateTime @default(now())
+  paymentMethod   String
+  branchId        String?
+  trackingNumber  String?
+  driverId        String?
+  items           Json     // Stores CartItem[]
+}
+
+model User {
+  id              String   @id @default(cuid())
+  type            String
+  email           String?  @unique
+  phone           String?  @unique
+  name            String?
+  creditLimit     Float?
+  currentBalance  Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Branch {
+  id        String   @id @default(uuid())
+  name_ar   String
+  city      String
+  is_active Boolean  @default(true)
+  ledger    FinancialLedger[]
+}
+
+model UserRole {
+  userId           String   @id @map("user_id")
+  email            String
+  role             String   // admin, developer, branch_manager, operations, delivery
+  biometricEnabled Boolean  @default(false) @map("biometric_enabled")
+  permissions      Json?
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   // order, shipping, system, payment
+  status    String   @default("unread") // unread, read
+  priority  String   @default("medium")
+  createdAt DateTime @default(now())
+  metadata  Json?
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  orderId       String
+  amount        Float
+  currency      String   @default("SAR")
+  status        String   // initiated, paid, failed, refunded
+  gateway       String   // moyasar, bank_transfer
+  transactionId String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+}
+
+model FinancialLedger {
+  id              String   @id @default(uuid())
+  branchId        String   @map("branch_id")
+  branch          Branch   @relation(fields: [branchId], references: [id])
+  orderId         String?  @map("order_id")
+  transactionType String   @map("transaction_type") // income, expense, refund
+  amount          Decimal  @db.Decimal(10, 2)
+  taxAmount       Decimal  @db.Decimal(10, 2) @map("tax_amount")
+  createdAt       DateTime @default(now()) @map("created_at")
+}
