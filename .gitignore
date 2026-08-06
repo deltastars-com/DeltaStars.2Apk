@@ -6,6 +6,7 @@ dist/
 dist-ssr/
 *.local
 out/
+*.tsbuildinfo
 
 # ── Environment & Secrets (never commit) ─────────────────────────────
 .env
