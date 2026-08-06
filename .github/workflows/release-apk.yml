@@ -1,0 +1,85 @@
+name: 📦 Release APK / AAB (GitHub Release)
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: 🤖 Build + Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build web app
+        run: npm run build:netlify
+        env:
+          VITE_SUPABASE_URL:             ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY:        ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_GEMINI_KEY:               ${{ secrets.VITE_GEMINI_KEY }}
+          VITE_MAPS_KEY:                 ${{ secrets.VITE_MAPS_KEY }}
+          VITE_MOYASAR_PUBLISHABLE_KEY:  ${{ secrets.VITE_MOYASAR_PUBLISHABLE_KEY }}
+          VITE_FIREBASE_API_KEY:         ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN:     ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID:      ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_VAPID_KEY:       ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Build release AAB + APK (signed when keystore secrets are set)
+        env:
+          KEYSTORE_BASE64:   ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS:         ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD:      ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/keystore.jks"
+          fi
+          cd android
+          chmod +x gradlew
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            ./gradlew assembleRelease \
+              -PKEYSTORE_PATH="$RUNNER_TEMP/keystore.jks" \
+              -PKEYSTORE_PASSWORD="$KEYSTORE_PASSWORD" \
+              -PKEY_ALIAS="$KEY_ALIAS" \
+              -PKEY_PASSWORD="$KEY_PASSWORD"
+            ./gradlew bundleRelease \
+              -PKEYSTORE_PATH="$RUNNER_TEMP/keystore.jks" \
+              -PKEYSTORE_PASSWORD="$KEYSTORE_PASSWORD" \
+              -PKEY_ALIAS="$KEY_ALIAS" \
+              -PKEY_PASSWORD="$KEY_PASSWORD"
+          else
+            ./gradlew assembleDebug
+          fi
+
+      - name: Create GitHub Release with APK / AAB
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/bundle/release/app-release.aab
+            android/app/build/outputs/apk/debug/app-debug.apk

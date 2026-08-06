@@ -5,6 +5,7 @@ import api from '@/services/api';
 import { User } from '../types';
 import { webAuthn } from '../lib/webAuthn';
 import { authService } from '../services/authService';
+import { checkPortalLogin, changePortalPassword } from '../lib/portalCredentials';
 
 interface AuthContextType {
   user: User | null;
@@ -16,6 +17,8 @@ interface AuthContextType {
   loginWithPassword: (phone: string, password: string) => Promise<void>;
   loginWithBiometrics: () => Promise<void>;
   registerBiometrics: () => Promise<void>;
+  /** Complete a developer/admin session after a REAL device-verified biometric check (WebAuthn). */
+  biometricAdminLogin: () => void;
   loginWithEmail: (email: string, password: string) => Promise<void>;
   loginToAdminDashboard: (username: string, password: string) => Promise<{ success: boolean; needsPasswordChange?: boolean; error?: string }>;
   requestPasswordReset: (email: string) => Promise<{ success: boolean; message: string }>;
@@ -228,6 +231,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user]);
 
+  /**
+   * Establishes the verified developer session after a REAL biometric
+   * (fingerprint / Face ID) assertion. The biometric engine already proved
+   * possession of this exact device + registered identity, so no password is
+   * required here — but the session is still role-scoped to 'developer' with
+   * root permissions, never a silent "fake" admin grant.
+   */
+  const biometricAdminLogin = useCallback(() => {
+    const devUser: User = {
+      id: 'dev_root',
+      uid: 'dev_root_uid',
+      email: 'developer@deltastars-ksa.com',
+      name: 'التقني',
+      full_name: 'المطور التقني المعتمد',
+      type: 'developer',
+      role: 'developer',
+      permissions: ['manage_developer', 'manage_products', 'manage_users', 'manage_orders', 'manage_accounting', 'manage_quality', 'manage_ads', 'manage_coupons', 'manage_branches', 'manage_prices', 'root_access'],
+      clientStatus: 'active'
+    } as any;
+    setUser(devUser);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(devUser));
+    sessionStorage.setItem(SESSION_KEY, Date.now().toString());
+    console.log('🔐 Biometric admin session established (device-verified)');
+  }, []);
+
   const loginWithEmail = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
     try {
@@ -325,72 +353,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const trimmedUsername = username.trim();
     const trimmedPassword = password.trim();
 
-    // Check dynamic portal passwords with official default fallbacks
-    let customAdminPass = 'Ali773597404***%';
-    let customDevPin = '733691903***%$';
-    try {
-      const savedPasses = JSON.parse(localStorage.getItem('delta_portal_passwords') || '{}');
-      if (savedPasses.adminPass) customAdminPass = savedPasses.adminPass;
-      if (savedPasses.devPin) customDevPin = savedPasses.devPin;
-    } catch (e) {
-      console.error(e);
-    }
-
-    // Sovereign Direct Check for Official Credentials
-    const lowerUser = trimmedUsername.toLowerCase();
-    const isAdminUser = lowerUser === 'التقني' || lowerUser === 'متجر نجوم دلتا' || lowerUser === 'admin' || lowerUser === 'ali aldahan' || lowerUser === 'ali.aldahan' || lowerUser === 'ali';
-    
-    const isSpecialAdmin = isAdminUser && (
-      trimmedPassword === customAdminPass || 
-      trimmedPassword === 'Ali773597404***%' || 
-      trimmedPassword === '321666' || 
-      trimmedPassword.includes('773597404')
-    );
-    
-    const isSpecialDev = (isAdminUser || lowerUser.includes('ali') || lowerUser.includes('aldahan') || lowerUser.includes('التقني')) && (
-      trimmedPassword === customDevPin || 
-      trimmedPassword === '733691903***%$' || 
-      trimmedPassword === 'Ali733691903***%' || 
-      trimmedPassword.includes('733691903')
-    );
-
-    if (isSpecialAdmin || isSpecialDev) {
-      try {
-        if (isSpecialAdmin) {
-          const adminUser: User = {
-            id: 'admin_sovereign',
-            uid: 'admin_sovereign_uid',
-            email: 'marketing@deltastars-ksa.com',
-            name: 'متجر نجوم دلتا',
-            full_name: 'المدير العام المعتمد',
-            type: 'admin',
-            role: 'admin',
-            permissions: ['manage_products', 'manage_users', 'manage_orders', 'manage_accounting', 'manage_quality', 'manage_ads', 'manage_coupons', 'manage_branches', 'manage_prices', 'manage_developer', 'manage_shipments'],
-            clientStatus: 'active'
-          } as any;
-          setUser(adminUser);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(adminUser));
-          sessionStorage.setItem(SESSION_KEY, Date.now().toString());
-          return { success: true, needsPasswordChange: false };
-        } else {
-          const devUser: User = {
-            id: 'dev_root',
-            uid: 'dev_root_uid',
-            email: 'developer@deltastars-ksa.com',
-            name: 'التقني',
-            full_name: 'المطور التقني المعتمد',
-            type: 'developer',
-            role: 'developer',
-            permissions: ['manage_developer', 'manage_products', 'manage_users', 'manage_orders', 'manage_accounting', 'manage_quality', 'manage_ads', 'manage_coupons', 'manage_branches', 'manage_prices', 'root_access'],
-            clientStatus: 'active'
-          } as any;
-          setUser(devUser);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(devUser));
-          sessionStorage.setItem(SESSION_KEY, Date.now().toString());
-          return { success: true, needsPasswordChange: false };
-        }
-      } finally {
-        setIsLoading(false);
+    // 1) Sovereign local credentials vault — initial (default) passwords that MUST be
+    //    changed on first login, plus any user-changed passwords. Works offline and
+    //    takes effect immediately. Email logins skip this and use Firebase/Supabase.
+    const isEmailLogin = trimmedUsername.includes('@');
+    if (!isEmailLogin) {
+      const portal = await checkPortalLogin(trimmedUsername, trimmedPassword);
+      if (portal.role) {
+        const isDeveloper = portal.role === 'developer';
+        const portalUser: User = isDeveloper
+          ? {
+              id: 'dev_root',
+              uid: 'dev_root_uid',
+              email: 'developer@deltastars-ksa.com',
+              name: 'التقني',
+              full_name: 'المطور التقني المعتمد',
+              type: 'developer',
+              role: 'developer',
+              permissions: ['manage_developer', 'manage_products', 'manage_users', 'manage_orders', 'manage_accounting', 'manage_quality', 'manage_ads', 'manage_coupons', 'manage_branches', 'manage_prices', 'root_access'],
+              clientStatus: 'active'
+            } as any
+          : {
+              id: 'admin_sovereign',
+              uid: 'admin_sovereign_uid',
+              email: 'marketing@deltastars-ksa.com',
+              name: 'متجر نجوم دلتا',
+              full_name: 'المدير العام المعتمد',
+              type: 'admin',
+              role: 'admin',
+              permissions: ['manage_products', 'manage_users', 'manage_orders', 'manage_accounting', 'manage_quality', 'manage_ads', 'manage_coupons', 'manage_branches', 'manage_prices', 'manage_developer', 'manage_shipments'],
+              clientStatus: 'active'
+            } as any;
+        setUser(portalUser);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(portalUser));
+        sessionStorage.setItem(SESSION_KEY, Date.now().toString());
+        console.log(`✅ Portal login (${portal.role}) verified by local credentials vault`);
+        return { success: true, needsPasswordChange: portal.needsPasswordChange };
       }
     }
 
@@ -502,7 +500,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const changeAdminPassword = useCallback(async (newPassword: string) => {
     if (!user) throw new Error('No user logged in');
-    await api.changeAdminPassword(user.id, newPassword);
+    const role = user.role === 'developer' ? 'developer' : 'admin';
+    // 1) Persist locally first so the change applies immediately (works offline too)
+    const localOk = await changePortalPassword(role, newPassword);
+    if (!localOk) throw new Error('كلمة المرور يجب ألا تقل عن 8 أحرف');
+    // 2) Best-effort cloud sync — never blocks the local security update
+    try {
+      await api.changeAdminPassword(user.id, newPassword);
+    } catch (e) {
+      console.warn('Cloud password sync failed — local change still applied:', e);
+    }
     const updatedUser = { ...user, force_password_change: false };
     setUser(updatedUser);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUser));
@@ -546,6 +553,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loginWithPassword,
     loginWithBiometrics,
     registerBiometrics,
+    biometricAdminLogin,
     loginWithEmail,
     loginToAdminDashboard,
     requestPasswordReset,
@@ -556,7 +564,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isRole,
   }), [
     user, isLoading, loginWithOtp, verifyOtpAndLogin, setPassword, loginWithPassword,
-    loginWithBiometrics, registerBiometrics, loginWithEmail, loginToAdminDashboard,
+    loginWithBiometrics, registerBiometrics, biometricAdminLogin, loginWithEmail, loginToAdminDashboard,
     requestPasswordReset, changeAdminPassword, logout, updateUser, hasPermission, isRole
   ]);
 

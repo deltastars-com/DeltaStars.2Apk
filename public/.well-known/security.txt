@@ -1,0 +1,10 @@
+# ================================================================
+# security.txt — الإبلاغ المسؤول عن الثغرات الأمنية
+# Delta Stars Trading Co. (نجوم دلتا للتجارة)
+# ================================================================
+
+Contact: mailto:INFO@DELTASTARS-KSA.COM
+Expires: 2027-08-06T00:00:00.000Z
+Preferred-Languages: ar, en
+Canonical: https://deltastars.store/.well-known/security.txt
+Policy: https://github.com/deltastars-com/DeltaStars.2Apk/blob/main/SECURITY.md

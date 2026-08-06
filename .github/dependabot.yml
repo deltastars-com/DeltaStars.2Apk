@@ -1,0 +1,86 @@
+# ================================================================
+# Dependabot — تحديث التبعيات والمكتبات آلياً وتلقائياً
+# Delta Stars Trading Co. (نجوم دلتا للتجارة)
+# ----------------------------------------------------------------
+# يفحص Dependabot كل صباح (أسبوعياً لكل نظام) ويُنشئ Pull Requests
+# تلقائية للتحديثات، مع تجميع تحديثات الأمان الحرجة وتحديثات
+# التطوير في مجموعات منفصلة لتقليل الضوضاء وسهولة المراجعة.
+# ================================================================
+
+version: 2
+updates:
+  # ── تبعيات Node.js / npm (الواجهة + الخادم + أدوات البناء) ──
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "saturday"
+      time: "04:00"
+      timezone: "Asia/Riyadh"
+    open-pull-requests-limit: 15
+    target-branch: "main"
+    labels:
+      - "dependencies"
+      - "automerge"
+    groups:
+      # تحديثات آمنة ومنخفضة الخطورة تُدمج تلقائياً معاً
+      runtime-safe:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+          - "minor"
+      # تحديثات الأمان الحرجة (تُعالج فوراً وليس لها حد أسبوعي)
+      security-critical:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    ignore:
+      # تثبيت Capacitor ضمن نفس النطاق الرئيسي (8.x) لتجنب كسر المشاريع الأصلية
+      - dependency-name: "@capacitor/*"
+        versions: [ ">=9.0.0" ]
+      - dependency-name: "react"
+        versions: [ ">=19.0.0" ]
+      - dependency-name: "react-dom"
+        versions: [ ">=19.0.0" ]
+
+  # ── GitHub Actions (أدوات CI/CD نفسها) ──
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "04:00"
+      timezone: "Asia/Riyadh"
+    open-pull-requests-limit: 10
+    labels:
+      - "ci"
+      - "dependencies"
+    groups:
+      actions-updates:
+        patterns:
+          - "*"
+
+  # ── مشروع أندرويد (Gradle / AGP / المكتبات الأصلية) ──
+  - package-ecosystem: "gradle"
+    directory: "/android"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Asia/Riyadh"
+    open-pull-requests-limit: 10
+    labels:
+      - "android"
+      - "dependencies"
+    groups:
+      gradle-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+          - "minor"
+    ignore:
+      - dependency-name: "com.android.tools.build:gradle"
+        versions: [ ">=9.0.0" ]
