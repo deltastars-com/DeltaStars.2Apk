@@ -144,7 +144,7 @@ npx cap open ios
 | **البريد** | INFO@DELTASTARS-KSA.COM |
 | **الموقع** | https://deltastars.store |
 | **الدومين الشركي** | https://deltastars-ksa.com |
-| **المطور والمهندس الرئيسي** | علي الدحان (Ali Al-Dahan) |
+| **المطور والمهندس الرئيسي** | علي  الدحان (Ali Al-Dahan) |
 
 ---
 
