@@ -79,7 +79,7 @@
     "tailwindcss": "^4.2.1",
     "terser": "^5.47.1",
     "tsx": "^4.23.0",
-    "typescript": "5.8.2",
+    "typescript": "7.0.2",
     "vite": "^6.4.3"
   },
   "devDependencies": {
