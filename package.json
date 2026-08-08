@@ -41,7 +41,7 @@
     "@google/genai": "^1.52.0",
     "@google/generative-ai": "^0.24.1",
     "@heroicons/react": "^2.1.5",
-    "@prisma/client": "6.2.1",
+    "@prisma/client": "7.9.1",
     "@react-google-maps/api": "^2.20.8",
     "@supabase/supabase-js": "^2.105.1",
     "@tailwindcss/postcss": "^4.0.0",
