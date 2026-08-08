@@ -56,7 +56,7 @@
     "date-fns": "^4.1.0",
     "esbuild": "^0.28.1",
     "express": "^5.2.1",
-    "firebase": "^11.10.0",
+    "firebase": "^12.17.1",
     "framer-motion": "^12.38.0",
     "i18next": "^26.0.8",
     "jspdf": "^4.2.1",
